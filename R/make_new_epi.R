@@ -40,7 +40,6 @@
 #' dat$epi$prev.O
 
 make_new_epi <- function(dat, args, FUN, new_name) {
-  require(dplyr)
   if (any(grepl("num", names(dat$epi)))) {
     epi <- dat$epi
     episim <- FALSE

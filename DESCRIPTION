@@ -1,14 +1,14 @@
 Package: EpiModelWHAMPDX
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Diagnostic plots for EpiModel
 Version: 0.1.0
 Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Maintainer: Adam Elder <eldera3@uw.edu>
+Description: This package is specialized for WHAMP plots.
+    However, hopefully it will be useful to other people someday.
+License: MIT
 Encoding: UTF-8
-Imports: magrittr
+Imports: magrittr, cowplot, dplyr, ggplot2, ggrepel, tidyr
 LazyData: true
 Depends: 
     R (>= 2.10)

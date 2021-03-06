@@ -43,9 +43,7 @@
 #'
 
 make_epi_plot_data <- function(dat_obj, plot_params) {
-  require(dplyr)
-  require(tidyr)
-  require(magrittr)
+  requireNamespace("magrittr")
   if (any(grepl("num", names(dat_obj$epi)))) {
     dat_obj$epi <- list(dat_obj$epi)
   }

@@ -4,9 +4,9 @@
 #' constructing the diagnostic plots for the WHAMP EpiModel Simulation.
 
 #'
-#' @docType dataframe
+#' @docType data
 #' @keywords dataframe
 #' @format A dataframe with targets for various epi values
 #' @name WHAMP.targs
-# "WHAMP.targs
+"WHAMP.targs"
 

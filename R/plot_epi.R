@@ -24,11 +24,7 @@ plot_epi <- function(plot_data,
                      targets = NULL,
                      plot_type = "line",
                      year_range = c(2000, 2030)) {
-  require(dplyr)
-  require(ggplot2)
-  require(magrittr)
-  require(cowplot)
-  require(ggrepel)
+  requireNamespace("magrittr")
   this_dat <- plot_data$epi_data %>%
     dplyr::filter(cat_name == brk_across, year > year_range[1],
            year < year_range[2])
@@ -46,12 +42,12 @@ plot_epi <- function(plot_data,
   }else{our_targ <- NULL}
   if (length(meas) > 1) {
     init_plot <- ggplot2::ggplot(
-      this_dat, aes(x = year, y = value,
+      this_dat, ggplot2::aes(x = year, y = value,
                     linetype = meas, color = sub_cat_name)) +
       ggplot2::scale_color_discrete(name = brk_across)
   }else{
     init_plot <- ggplot2::ggplot(
-      this_dat, aes(x = year, y = value, color = sub_cat_name)) +
+      this_dat, ggplot2::aes(x = year, y = value, color = sub_cat_name)) +
       ggplot2::scale_color_discrete(name = brk_across)
   }
   if (!is.null(our_targ$low)) {
@@ -62,7 +58,7 @@ plot_epi <- function(plot_data,
     targ_plt_df$sub_cat_name <- targ_plt_df$sub_cat
     init_plot <- init_plot +
       ggplot2::geom_ribbon(data = targ_plt_df, y = NA, color = NA,
-                  aes(fill = sub_cat_name, ymin = low, ymax = high),
+                  ggplot2::aes(fill = sub_cat_name, ymin = low, ymax = high),
                   alpha = 0.3) +
       ggplot2::scale_fill_discrete(name = brk_across)
   }
@@ -87,28 +83,32 @@ plot_epi <- function(plot_data,
       ggplot2::ggplot_build(fin_plot)$layout$panel_scales_y[[1]]$range$range
     yr_dat$meas <- meas[1]
     fin_plot <- fin_plot +
-      ggplot2::geom_vline(data = yr_dat, aes(xintercept = year),
+      ggplot2::geom_vline(data = yr_dat, ggplot2::aes(xintercept = year),
                  alpha = 0.5) +
       ggrepel::geom_label_repel(data = yr_dat,
-                                aes(x = year, label = name),
+                                ggplot2::aes(x = year, label = name),
                                 color = "black",
                                 y = ylim[2], direction = "y",
                                 alpha = 0.5,
                                 min.segment.length = 10)
-    fin_plot <- fin_plot + theme(legend.box = "horizontal") +
-      scale_linetype_discrete(name = "Measure")
+    fin_plot <- fin_plot + ggplot2::theme(legend.box = "horizontal") +
+      ggplot2::scale_linetype_discrete(name = "Measure")
   }
   if (brk_across %in% c("age.grp")) {
-    fin_plot <- fin_plot + scale_color_manual(
-      name = "Age Group", values = c( "#9ecae1", "#6baed6", "#4292c6",
-                                      "#2171b5", "#08519c", "#08306b"))
+    cols <- c("#b2182b", "#ef8a62", "#fddbc7",
+              "#d1e5f0", "#67a9cf", "#2166ac")
+    fin_plot <- fin_plot + ggplot2::scale_color_manual(
+      name = "Age Group", values = cols) +
+      ggplot2::scale_fill_manual(
+        name = "Age Group", values = cols)
   }
   if (brk_across == "ovr") {
     fin_plot <- suppressMessages(
-      fin_plot + scale_color_discrete(guide = "none") +
-        scale_fill_discrete(guide = "none")
+      fin_plot + ggplot2::scale_color_discrete(guide = "none") +
+        ggplot2::scale_fill_discrete(guide = "none")
     )
   }
   fin_plot
 }
+
 
