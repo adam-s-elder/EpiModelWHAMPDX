@@ -55,11 +55,18 @@ plot_epi <- function(plot_data,
       our_targ %>% dplyr::mutate(year = year_range[1]),
       our_targ %>% dplyr::mutate(year = year_range[2])
     )
+    rib_alpha <- ifelse(brk_across == "ovr", 0.3, 0)
+    line_alpha <- 1
     targ_plt_df$sub_cat_name <- targ_plt_df$sub_cat
     init_plot <- init_plot +
       ggplot2::geom_ribbon(data = targ_plt_df, y = NA, color = NA,
                   ggplot2::aes(fill = sub_cat_name, ymin = low, ymax = high),
-                  alpha = 0.3) +
+                  alpha = rib_alpha) +
+      ggplot2::geom_line(
+        data = targ_plt_df,
+        ggplot2::aes(y = targ, color = sub_cat_name,
+        ), alpha = line_alpha
+        ) +
       ggplot2::scale_fill_discrete(name = brk_across)
   }
   if (plot_type == "line") {
@@ -68,14 +75,31 @@ plot_epi <- function(plot_data,
     upd_plot <- init_plot +
       ggplot2::geom_smooth(se = FALSE, method = "loess", formula = y ~ x)
   }
+  if (!is.null(plot_data$plot_ylab)) {
+    yaxis_inf <- ggplot2::element_text()
+    upd_plot <- upd_plot + ylab(plot_data$plot_ylab)
+  }else{
+    yaxis_inf <- ggplot2::element_blank()
+  }
+  if (!is.null(plot_data$plot_cap)) {
+    upd_plot <- upd_plot + labs(caption = plot_data$plot_cap)
+  }
+  if (brk_across != "ovr") {
+    plt_title <- paste0(
+      plot_data$plot_title, " by ", dplyr::recode(
+        brk_across, "region" = "Region", "age.grp" = "Age Group",
+        "race" = "Race"
+      )
+    )
+  }else{ plt_title <- plot_data$plot_title }
   fin_plot <- upd_plot + cowplot::theme_cowplot() +
-    ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+    ggplot2::theme(axis.title.y = yaxis_inf,
                    legend.position = "right",
           legend.box = "vertical", legend.margin = ggplot2::margin(),
           panel.background = ggplot2::element_rect(fill = "#E0E2E7"),
           panel.grid = ggplot2::element_line(color = "#FFFFFF", size = 0.4)) +
     ggplot2::xlab("Year") +
-    ggplot2::ggtitle(plot_data$plot_title)
+    ggplot2::ggtitle(plt_title)
   disp_imp_yrs <- TRUE
   if (disp_imp_yrs) {
     yr_dat <- plot_data$impt_years
@@ -95,12 +119,16 @@ plot_epi <- function(plot_data,
       ggplot2::scale_linetype_discrete(name = "Measure")
   }
   if (brk_across %in% c("age.grp")) {
-    cols <- c("#b2182b", "#ef8a62", "#fddbc7",
-              "#d1e5f0", "#67a9cf", "#2166ac")
+    cols <- c("#4575b4", "#0088db", "#4ad4f8",
+              "#feb010", "#fc4a4a", "#d70000")
+      # c("#b2182b", "#ef8a62", "#fddbc7",
+      #         "#d1e5f0", "#67a9cf", "#2166ac")
     fin_plot <- fin_plot + ggplot2::scale_color_manual(
       name = "Age Group", values = cols) +
-      ggplot2::scale_fill_manual(
-        name = "Age Group", values = cols)
+      ggplot2::guides(fill = FALSE)  #+
+      # theme(
+      #   panel.background = element_rect(fill = "#9B9DA0")
+      # )
   }
   if (brk_across == "ovr") {
     fin_plot <- suppressMessages(

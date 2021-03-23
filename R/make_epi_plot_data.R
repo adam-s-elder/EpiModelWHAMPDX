@@ -57,7 +57,7 @@ make_epi_plot_data <- function(dat_obj, plot_params) {
     upd_dat <- dat_obj
   }
   req_epi <- list()
-  for (atr_idx in 1:4) {
+  for (atr_idx in seq(EpiModelWHAMPDX::attr_names)) {
     req_epi <- c(req_epi,
                  upd_dat$epi[[1]][paste0(
                    plot_params$name, ".",
@@ -118,6 +118,8 @@ make_epi_plot_data <- function(dat_obj, plot_params) {
   rownames(impt_yrs) <- NULL
   return(
     list(plot_title = plot_params$plot_name,
+         plot_cap = plot_params$plot_cap,
+         plot_ylab = plot_params$plot_ylab,
          epi_data = tidy_epi_info,
          impt_years = impt_yrs)
   )
