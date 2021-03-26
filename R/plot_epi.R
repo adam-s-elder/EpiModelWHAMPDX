@@ -43,7 +43,7 @@ plot_epi <- function(plot_data, brk_across = "ovr",
       this_dat, ggplot2::aes(x = year, y = value,
                     linetype = meas, color = sub_cat_name)) +
       ggplot2::scale_color_discrete(name = brk_across)
-  }else if (!is.null(this_dat$meta_measure)){
+  }else if ("meta_measure" %in% colnames(this_dat)){
     init_plot <- ggplot2::ggplot(
       this_dat, ggplot2::aes(x = year, y = value,
                              group = interaction(meta_measure, sub_cat_name),
