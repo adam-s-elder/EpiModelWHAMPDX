@@ -19,10 +19,8 @@
 #' @examples
 #' # See vignette
 
-plot_epi <- function(plot_data,
-                     brk_across = "ovr",
-                     targets = NULL,
-                     plot_type = "line",
+plot_epi <- function(plot_data, brk_across = "ovr",
+                     targets = NULL, plot_type = "line",
                      year_range = c(2000, 2030)) {
   requireNamespace("magrittr")
   this_dat <- plot_data$epi_data %>%
@@ -45,6 +43,13 @@ plot_epi <- function(plot_data,
       this_dat, ggplot2::aes(x = year, y = value,
                     linetype = meas, color = sub_cat_name)) +
       ggplot2::scale_color_discrete(name = brk_across)
+  }else if (!is.null(this_dat$meta_measure)){
+    init_plot <- ggplot2::ggplot(
+      this_dat, ggplot2::aes(x = year, y = value,
+                             group = interaction(meta_measure, sub_cat_name),
+                             linetype = meta_measure,
+                             color = sub_cat_name)) +
+      ggplot2::scale_color_discrete(name = brk_across)
   }else{
     init_plot <- ggplot2::ggplot(
       this_dat, ggplot2::aes(x = year, y = value, color = sub_cat_name)) +
@@ -58,14 +63,19 @@ plot_epi <- function(plot_data,
     rib_alpha <- ifelse(brk_across == "ovr", 0.3, 0)
     line_alpha <- 1
     targ_plt_df$sub_cat_name <- targ_plt_df$sub_cat
+    targ_plt_df$meta_measure <- NA
     init_plot <- init_plot +
       ggplot2::geom_ribbon(data = targ_plt_df, y = NA, color = NA,
-                  ggplot2::aes(fill = sub_cat_name, ymin = low, ymax = high),
+                  ggplot2::aes(fill = sub_cat_name,
+                               group = sub_cat_name,
+                               ymin = low, ymax = high),
                   alpha = rib_alpha) +
       ggplot2::geom_line(
         data = targ_plt_df,
-        ggplot2::aes(y = targ, color = sub_cat_name,
-        ), alpha = line_alpha
+        ggplot2::aes(y = targ,
+                     color = sub_cat_name,
+
+        ),linetype = 1, alpha = line_alpha
         ) +
       ggplot2::scale_fill_discrete(name = brk_across)
   }
@@ -106,16 +116,18 @@ plot_epi <- function(plot_data,
     ylim <-
       ggplot2::ggplot_build(fin_plot)$layout$panel_scales_y[[1]]$range$range
     yr_dat$meas <- meas[1]
+    yr_dat$sub_cat_name <- NA
+    yr_dat$meta_measure <- NA
     fin_plot <- fin_plot +
       ggplot2::geom_vline(data = yr_dat, ggplot2::aes(xintercept = year),
-                 alpha = 0.5) +
+                          alpha = 0.5) +
       ggrepel::geom_label_repel(data = yr_dat,
                                 ggplot2::aes(x = year, label = name),
                                 color = "black",
                                 y = ylim[2], direction = "y",
                                 alpha = 0.5,
                                 min.segment.length = 10)
-    fin_plot <- fin_plot + ggplot2::theme(legend.box = "horizontal") +
+    fin_plot <- fin_plot + ggplot2::theme(legend.box = "vertical") +
       ggplot2::scale_linetype_discrete(name = "Measure")
   }
   if (brk_across %in% c("age.grp")) {
