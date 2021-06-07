@@ -2,6 +2,12 @@
 
 export(build_targ_from_dat)
 export(make_epi_plot_data)
+export(make_exit_plot)
 export(make_new_epi)
+export(make_num_plot)
+export(make_split_num_plot)
 export(plot_epi)
+export(print_many_plots)
+importFrom(WApopdata,get_data)
+importFrom(dplyr,filter)
 importFrom(magrittr,"%>%")

@@ -8,7 +8,7 @@ Description: This package is specialized for WHAMP plots.
     However, hopefully it will be useful to other people someday.
 License: MIT
 Encoding: UTF-8
-Imports: magrittr, cowplot, dplyr, ggplot2, ggrepel, tidyr
+Imports: magrittr, cowplot, dplyr, ggplot2, ggrepel, tidyr, WApopdata
 LazyData: true
 Depends: 
     R (>= 2.10)

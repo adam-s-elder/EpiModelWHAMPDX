@@ -24,7 +24,7 @@ prop_suprs <- data.frame(
 ## Prevalence
 ### Race
 popdat <- WApopdata::msm.pop.totals_2019
-race_df <- popdat$pop.hbo.pos %>%
+race_df <- popdat$pop.race.pos %>%
   select(subcat = race, low = prev_lb, high = prev_ub) %>%
   mutate(measure = "prev", cat = "race")
 ### Age Group
@@ -36,6 +36,7 @@ agrp_df <- popdat$pop.age.pos %>%
   ungroup() %>% filter(subcat < 7) %>%
   select(subcat, low = prev_lb, high = prev_ub) %>%
   mutate(measure = "prev", cat = "age.grp")
+
 ### Region
 region_df <- popdat$pop.region.pos %>%
   select(subcat = region, low = prev_lb, high = prev_ub) %>%

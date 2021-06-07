@@ -86,7 +86,7 @@ make_epi_plot_data <- function(dat_obj, plot_params) {
     all_epi_inf <- all_epi_inf[, !which_all_na]
     all_epi_inf <- all_epi_inf[stats::complete.cases(all_epi_inf), ]
     all_epi_inf$year <- (all_epi_inf$at - dat_obj$control$start + 1) / 52 +
-      dat_obj$control$year_start
+      dat_obj$control$year.start
     tidy_epi_info <- all_epi_inf %>% dplyr::select(-at) %>%
       tidyr::pivot_longer(cols = -year)
     cmbd_names <- tidy_epi_info$name
@@ -125,7 +125,7 @@ make_epi_plot_data <- function(dat_obj, plot_params) {
   }
   if (mult_meas) tidy_epi_info <- all_epi_info
   impt_yrs <- c(
-    "mtch.demog" = max(dat_obj$param$demog_match_arrival_df$entry_year),
+    "mtch.demog" = max(dat_obj$param$demog$match.arrival$entry_year),
     "adap.start" = dat_obj$control$adap.year.start,
     "pdap.start" = dat_obj$control$pdap.year.start,
     "prep.start" = dat_obj$control$risk.hist.start.year,

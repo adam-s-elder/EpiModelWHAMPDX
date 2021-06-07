@@ -30,12 +30,12 @@ plot_epi <- function(plot_data, brk_across = "ovr",
   if (!is.null(targets)) {
     our_targ <- targets %>%
       dplyr::filter(cat == brk_across, measure %in% meas)
-    if (nrow(our_targ) == 0) our_targ <- NULL
+    if ((nrow(our_targ) == 0) & TRUE) our_targ <- NULL
     if (!is.null(our_targ) &
-        any(our_targ$low == our_targ$high)) {
+        any(our_targ$low == our_targ$high, na.rm = TRUE)) {
       which_match <- which(our_targ$low == our_targ$high)
       our_targ$low <- our_targ$low * 0.99
-      our_targ$high <- our_targ$low * 1.01
+      our_targ$high <- our_targ$high * 1.01
     }
   }else{our_targ <- NULL}
   if (length(meas) > 1) {
