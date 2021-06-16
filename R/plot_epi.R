@@ -41,18 +41,22 @@ plot_epi <- function(plot_data, brk_across = "ovr",
   if (length(meas) > 1) {
     init_plot <- ggplot2::ggplot(
       this_dat, ggplot2::aes(x = year, y = value,
+                             group = interaction(simno, sub_cat_name),
                     linetype = meas, color = sub_cat_name)) +
       ggplot2::scale_color_discrete(name = brk_across)
   }else if ("meta_measure" %in% colnames(this_dat)){
     init_plot <- ggplot2::ggplot(
-      this_dat, ggplot2::aes(x = year, y = value,
-                             group = interaction(meta_measure, sub_cat_name),
-                             linetype = meta_measure,
-                             color = sub_cat_name)) +
+      this_dat, ggplot2::aes(
+        x = year, y = value,
+        group = interaction(simno, meta_measure, sub_cat_name),
+        linetype = meta_measure,
+        color = sub_cat_name)) +
       ggplot2::scale_color_discrete(name = brk_across)
   }else{
     init_plot <- ggplot2::ggplot(
-      this_dat, ggplot2::aes(x = year, y = value, color = sub_cat_name)) +
+      this_dat, ggplot2::aes(x = year, y = value,
+                             group = interaction(simno, sub_cat_name),
+                             color = sub_cat_name)) +
       ggplot2::scale_color_discrete(name = brk_across)
   }
   if (!is.null(our_targ$low)) {
@@ -64,6 +68,7 @@ plot_epi <- function(plot_data, brk_across = "ovr",
     line_alpha <- 1
     targ_plt_df$sub_cat_name <- targ_plt_df$sub_cat
     targ_plt_df$meta_measure <- NA
+    targ_plt_df$simno <- 1
     init_plot <- init_plot +
       ggplot2::geom_ribbon(data = targ_plt_df, y = NA, color = NA,
                   ggplot2::aes(fill = sub_cat_name,
@@ -118,6 +123,7 @@ plot_epi <- function(plot_data, brk_across = "ovr",
     yr_dat$meas <- meas[1]
     yr_dat$sub_cat_name <- NA
     yr_dat$meta_measure <- NA
+    yr_dat$simno <- NA
     fin_plot <- fin_plot +
       ggplot2::geom_vline(data = yr_dat, ggplot2::aes(xintercept = year),
                           alpha = 0.5) +

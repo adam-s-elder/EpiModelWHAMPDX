@@ -39,12 +39,12 @@
 #' dat <- make_new_epi(dat, c("num.", "num.i."), function(x, y){y / x}, "prev.")
 #' dat$epi$prev.O
 
-make_new_epi <- function(dat, args, FUN, new_name) {
-  if (any(grepl("num", names(dat$epi)))) {
-    epi <- dat$epi
+make_new_epi <- function(epi, args, FUN, new_name) {
+  if (any(grepl("num", names(epi)))) {
+    epi <- epi
     episim <- FALSE
   }else{
-    epi <- dat$epi[[1]]
+    epi <- epi[[1]]
     episim <- TRUE
   }
   lens <- sapply(epi, length)
@@ -80,12 +80,12 @@ make_new_epi <- function(dat, args, FUN, new_name) {
     sub_lst <- epi[paste0(args, sub_val)]
     names(sub_lst) <- NULL
     if (episim) {
-      dat$epi[[1]][[paste0(new_name, sub_val)]] <-
+      epi[[1]][[paste0(new_name, sub_val)]] <-
         do.call(FUN, sub_lst)
     }else{
-      dat$epi[[paste0(new_name, sub_val)]] <-
+      epi[[paste0(new_name, sub_val)]] <-
         do.call(FUN, sub_lst)
     }
   }
-  return(dat)
+  return(epi)
 }

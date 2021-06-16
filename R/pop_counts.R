@@ -8,9 +8,11 @@
 #'
 #' @export
 make_split_num_plot <- function(sim, race_spec = FALSE, ofm_proj = NULL) {
-  age_cnts <- sim$epi[[1]]$age_dist %>%
+  age_cnts <- map(sim$temp, function(x) {
+    x$age_dist %>%
     mutate(Age = c("Active (< 65)",
                    "Inactive (>65)")[2 - as.numeric(age < 65)])
+  })
   if (race_spec) {
     age_per_year <- age_cnts %>% group_by(at, Age, race) %>%
       summarise(count = sum(count)) %>%
@@ -40,27 +42,35 @@ make_split_num_plot <- function(sim, race_spec = FALSE, ofm_proj = NULL) {
       geom_vline(xintercept = max(sim$param$demog$match.arrival$entry_year)) +
       facet_wrap(~ race) + theme(legend.position = "bottom")
   } else {
-    age_per_year <- age_cnts %>% group_by(at, Age) %>%
+    age_per_year <- map(age_cnts, function(x) {x %>% group_by(at, Age) %>%
       summarise(count = sum(count)) %>%
       mutate(year = round((at - sim$control$start) / 52 +
                             sim$control$year.start)) %>%
       ungroup() %>% select(-at)
+    })
     start_grwth <- max(sim$param$demog$match.arrival$entry_year)
     maxyear <- sim$control$year.start +
       (sim$control$nsteps - sim$control$start) / 52
-    netsize_st <- age_per_year$count[
-      which.min((age_per_year$year - start_grwth) ** 2)]
-    grwt <- sim$param$demog$pop.growth %>%
+    netsize_st <- map(age_per_year, function(x) x$count[
+      which.min((x$year - start_grwth) ** 2)])
+    grwt <- map(netsize_st, function(x) {sim$param$demog$pop.growth %>%
       filter((year) >= (start_grwth) & year <= (maxyear - 1)) %>%
-      mutate(count = s_perc * netsize_st, Age = "Active (< 65)",
-             year = year + 1) %>%
-      select(count, year, Age)
+      mutate(count = s_perc * x, Age = "Active (< 65)",
+             year = year + 1, simno = 1) %>%
+      select(count, year, Age)})
+    grwt.fin <- do.call(bind_rows, grwt)
+    grwt.fin$simno <- rep(1:length(grwt),
+                          each = nrow(grwt[[1]]))
+    apy <- do.call(bind_rows, age_per_year)
+    apy$simno <- rep(1:length(age_per_year),
+                     each = nrow(age_per_year[[1]]))
     fin_df <- bind_rows(
-      bind_cols(age_per_year, "Source" = "Simulation"),
-      bind_cols(grwt, "Source" = "Target"),
+      bind_cols(apy, "Source" = "Simulation"),
+      bind_cols(grwt.fin, "Source" = "Target"),
     )
-    fin_df %>% ggplot(aes(x = year, y = count,
-                          color = Age, linetype = Source)) +
+    fin_df %>% ggplot(aes(x = year, y = count, color = Age,
+                          group = interaction(simno, Age, Source),
+                          linetype = Source)) +
       geom_line(size = 1.5, alpha = 0.85) +
       geom_vline(xintercept = max(sim$param$demog$match.arrival$entry_year)) +
       ylab("Population Size") + xlab("Year") +

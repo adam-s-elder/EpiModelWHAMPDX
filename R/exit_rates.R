@@ -15,7 +15,13 @@
 #' @export
 
 make_exit_plot <- function(sim) {
-  ad <- sim$epi[[1]]$age_dist %>% as.data.frame()
+  agedists <- lapply(sim$temp, "[[", "age_dist")
+  cmbd <- purrr::reduce(agedists, left_join,
+                        by = c("age", "race", "at")) %>% ungroup()
+  cmbd <- data.frame(cmbd[, c("age", "race", "at")],
+                     count = apply(cmbd %>% select(- age, - race, -at),
+                                   1, sum)) %>% ungroup()
+  ad <- cmbd %>% as.data.frame()
   wks_in <- sim$control$start - min(ad$at)
   tr_sy <- sim$control$year.start - wks_in / 52
   ad$year <- round(tr_sy + ad$at /52)
