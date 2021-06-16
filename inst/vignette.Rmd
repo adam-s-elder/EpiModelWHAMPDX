@@ -1,0 +1,214 @@
+---
+title: "EpiModelWHAMPDX Vignette"
+author: "Adam Elder"
+date: "`r Sys.Date()`"
+output: 
+    html_document:
+        theme: lumen
+        toc: true
+        code_folding: show
+        toc_depth: 2
+        toc_float: true
+        number_sections: true
+---
+
+# Overview
+
+In this document, I will be reviewing some of the main functionality of the EpiModelWHAMPDX package
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages(library(here))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(EpiModelWHAMPDX))
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Understanding the epi object
+
+Before we get into looking at the `EpiModelWHAMPDX` functions, it will be valuable to understand the structure of the epi object.  The epi object is an object inside of the net sim object.  For each epi parameter that is tracked, there is a dataframe, and each row corresponds to the time step, and each column corresponds to a different simulation:
+
+```{r}
+## Reading in some example data
+simnet <- readRDS(here("data", "examp_simnet.rds"))
+one_examp <- simnet$epi$num.undx.ovr
+one_examp[nrow(one_examp) - c(1:10), ]
+```
+
+Looking at the names of dataframes inside of the epi object, we see many similarities between the names
+
+```{r}
+head(names(simnet$epi))
+```
+
+Here we see for `i.num` that we have `i.num.employer` for employer health insurance.  So, since `i.num` is the number infected, `i.num.employer` is the number who are infected who are on employer health insurance.  For this example, we are only considering a subset of the epi values that are tracked.  They are:
+
+```{r}
+map(strsplit(names(simnet$epi), "\\."), function(x){
+  if (length(x) > 1) {
+    return(paste0(x[-length(x)], collapse = "."))
+  }else{
+    return(x)
+  }
+}) %>% as.character() %>% unique()
+```
+
+So, we are only looking at the infected number `i.num`, number total `num`, newly diagnosed `new.dx`, and number undiagnosed `num.undx`.
+
+
+# Creating plot data
+
+A major functionality of this package is to be able to provide summaries from the EpiModel `epi` object, broken down across different attributes.  The specification for the desired plot is made with the use of a list object.  For now, we will simply specify a plot with the number of individuals in the population:
+
+```{r}
+simnet$epi$num <- simnet$epi$num.ovr
+
+plot.list <- list(name = "Number",
+                  # Name of the variable of interest.  This should
+                  # match the name of the target variable name if you 
+                  # have a target for the plot
+                  sec_title = "Section Title",
+                  plot_name = "Plot Name",
+                  plot_cap = "Example Plot Caption",
+                  plot_ylab = "Y-Label",
+                  plt_type = "line",
+                  vars = c("num."),
+                  # variables as they appear in the epi object (without endings)
+                  sum_fun = function(x) {x}
+                  # A function of the variables above. The function here should
+                  # take as many arguments as the length of the vars argument.
+                  )
+```
+
+One of the main functions inside the package is called `make_epi_plot_data`. This function takes in the netsim object and the plot list and returns the object that will be used to create our plot:
+
+```{r make_data}
+plot_dat <- make_epi_plot_data(simnet, plot.list)
+plot_dat
+```
+
+# Creating the Plot
+
+This plot data is in turn passed to the `plot_epi` function.  It is worth noting that the plot_dat object will have data for breakdowns by attributes, so it is important to specify which attribute you wish to break over.  Here we don't break down across an attribute, so we specify `brk_across == "ovr"`.  Two lines appear here because the simulation we use here ran two separate simulations.
+
+```{r plot_data}
+plot_epi(plot_dat, year_range = c(1980, 2030), brk_across = "ovr")
+```
+
+It is also possible look at this plot broken down across race:
+
+```{r plot_data_race}
+plot_epi(plot_dat, year_range = c(1980, 2030), brk_across = "race")
+```
+
+# A Second Example
+
+Now, lets say we want to look at the proportion of individuals in the population who are infected.  Because we only have `i.num`, `num`, `new.dx`, and `num.undx`, we cannot look at the proportion of individuals who are infected directly.  However, we can create a new variable by specifying it in our plot list.
+
+```{r second_examp}
+plot.list2 <- list(name = "prop.inf",
+                   sec_title = "Prevalence",
+                   plot_name = "Proportion Infected",
+                   plot_cap = "Among individuals who have ever had a partner.",
+                   plot_ylab = "Proportion",
+                   plt_type = "line",
+                   vars = c("num.", "i.num."),
+                   sum_fun = function(x, y) {y / x}
+)
+plot_dat2 <- make_epi_plot_data(simnet, plot.list2)
+plot_epi(plot_dat2, year_range = c(1980, 2030), brk_across = "region")
+```
+
+Because plot_epi returns a ggplot object, we can add additional arguments to this returned plot if we want:
+
+```{r add_other}
+plot_epi(plot_dat2, year_range = c(1980, 2030), brk_across = "region") + 
+  coord_cartesian(ylim = c(0, 0.15))
+```
+
+# A Third Example
+
+Now, say we want to look at how close our simulation comes to a given target.  The EpiModelWHAMPDX package expects the targets to be given in the following format:
+
+```{r}
+target.df <- readRDS(here("data", "WHAMP.dx.targs.rds"))
+target.df %>% filter(measure == "prev")
+```
+
+The columns:
+
+- subcat: The subcategory desired (as an example 1 meaning the lowest age group)
+- low: The lower bound for the target
+- targ: the best estimate for the target
+- high: the upper bound for the target
+- measure: the measure for which the target is given.  This should match the `name` element in the plot list object.
+- cat: the overall category name (race / region / age.grp, etc.)
+- sub_cat: A prettied up version of subcat
+
+Now, we wish to display this target against what was observed in the simulation.  This measure is slightly different from what we saw above since we are now only interested in the diagnosed prevalence:
+
+```{r diag_prev.examp}
+plot.list3 <- list(name = "prev",
+                   sec_title = "Diagnosed Prevalence",
+                   plot_name = "Proportion with diagnosed infection",
+                   plot_cap = "Among individuals who have ever had a partner.",
+                   plot_ylab = "Proportion",
+                   plt_type = "line",
+                   vars = c("num.", "i.num.", "num.undx."),
+                   sum_fun = function(x, y, z) {(y - z) / x}
+)
+plot_dat3 <- make_epi_plot_data(simnet, plot.list3)
+plot_epi(plot_dat3, year_range = c(1980, 2030),
+         brk_across = "ovr", targets = target.df) +
+  coord_cartesian(ylim = c(0, 0.15))
+```
+
+Above, we can see that there is a confidence interval shown for the overall display.  To make sure the plot does not get too busy, this is not done when summaries are broken down by attribute:
+
+
+```{r brkouts_no_ci}
+plot_epi(plot_dat3, year_range = c(1980, 2030),
+         brk_across = "race", targets = target.df) +
+  coord_cartesian(ylim = c(0, 0.15))
+```
+
+# A Fourth Example
+
+In some cases, we want to use more complicated functions of our epi parameters.  This is possible with the current functionality of the package.  Here we first look at the number of newly diagnosed individuals at each time step:
+
+```{r averaging example}
+plot.list4 <- list(name = "newdx",
+                   sec_title = "Number of Newly Diagnosed",
+                   plot_name = "Newly Diagnosed",
+                   plot_cap = "",
+                   plot_ylab = "Count",
+                   plt_type = "line",
+                   vars = c("new.dx."),
+                   sum_fun = function(x) {x}
+)
+plot_dat4 <- make_epi_plot_data(simnet, plot.list4)
+plot_epi(plot_dat4, year_range = c(1980, 2030),
+         brk_across = "ovr", targets = target.df)
+```
+
+We see above that this summary is far too noisy to be useful.  So instead, we can look at the number of individuals diagnosed in the last year:
+
+```{r averaging example part 2}
+rolling_year_sum <- function(x, years = 1, avg = FALSE){
+  val <- data.table::frollsum(fill(data.frame(x), "x")$x, years * 52)
+  if (avg) {val <- val / (years * 52)}
+  return(val)
+}
+
+plot.list5 <- list(name = "newdx",
+                   sec_title = "Number of Newly Diagnosed in the Last Year",
+                   plot_name = "Newly Diagnosed",
+                   plot_cap = "In the last year. The spike here is caused by the initiation of PrEP which forces individuals to test at a higher rate.",
+                   plot_ylab = "Count",
+                   plt_type = "line",
+                   vars = c("new.dx."),
+                   sum_fun = function(x) {rolling_year_sum(x)}
+)
+plot_dat5 <- make_epi_plot_data(simnet, plot.list5)
+plot_epi(plot_dat5, year_range = c(1980, 2030),
+         brk_across = "ovr", targets = target.df)
+```
